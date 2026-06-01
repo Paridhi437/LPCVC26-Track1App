@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Image-to-Text Retrieval"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="This app demonstrates the winner's solution of LPCVC 2026 Track 1: Image-to-Text Retrieval. The goal of this track is to retrieve the most relevant text descriptions for a given image from a candidate pool.\nThe first place winner of this challenge was EfficientAI, achieving an accuracy score of 0.6270 on our evaluation dataset."
+            android:textSize="16sp"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="App Workflow:"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="• Texts are tokenized using CLIP Tokenizer prior to app deployment.\n• Upon APP startup, all text embeddings are calculated.\n• User Selects an image for retrieval.\n• Run Model button is pressed\n• Image embeddings are calculated.\n• Cosine similarity scores of image and text embeddings are calculated.\n• Ranked texts are listed."
+            android:layout_marginBottom="16dp" />
+
+    </LinearLayout>
+</ScrollView>

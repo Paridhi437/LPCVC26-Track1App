@@ -1,0 +1,147 @@
+import java.nio.file.Paths
+
+plugins {
+    id 'com.android.application' version '9.2.1'
+}
+
+// Path to local QAIRT SDK.
+// Download QAIRT SDK from https://qpm.qualcomm.com/#/main/tools/details/Qualcomm_AI_Runtime_SDK
+// e.g. "/opt/qcom/aistack/qairt/2.33.0.250327"
+//      "C:\\Qualcomm\\AIStack\\QAIRT\\2.33.0.250327"
+def qnnSDKLocalPath= System.getenv("QAIRT_SDK_ROOT") ?: "C:\\Users\\agarw\\Downloads\\v2.46.0.260424\\qairt\\2.46.0.260424"
+
+// List of model assets
+def models = ["image_encoder", "text_encoder"]
+// Relative asset path for model configuration and dlc files
+def relAssetsPath = "src/main/assets/models"
+def buildDir = project.getLayout().getBuildDirectory()
+def libsDir = buildDir.dir("libs")
+
+android {
+    ndkVersion '27.3.13750724'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.quicinc.chatapp"
+
+        minSdk 31
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+        externalNativeBuild {
+            cmake {
+                cppFlags "-std=c++17"
+                abiFilters "arm64-v8a"
+                arguments "-DQNN_SDK_ROOT_PATH=" + qnnSDKLocalPath.replace("\\", "/")
+                arguments "-DANDROID_STL=c++_shared"
+            }
+        }
+        ndk {
+            abiFilters "arm64-v8a"
+        }
+        sourceSets {
+            main {
+                jniLibs.srcDir libsDir.get().getAsFile()
+            }
+        }
+        signingConfig signingConfigs.debug
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    namespace "com.quicinc.chatapp"
+    externalNativeBuild {
+        cmake {
+            path file("src/main/cpp/CMakeLists.txt")
+            version "3.22.1"
+        }
+    }
+    packagingOptions {
+        jniLibs {
+            pickFirsts += ['lib/arm64-v8a/libc++_shared.so', 'lib/arm64-v8a/libSNPE.so', 'lib/arm64-v8a/libSnpeHtpPrepare.so']
+        }
+
+        // Extract native libraries so they"re accessible via the file system directly.
+        jniLibs.useLegacyPackaging = true
+    }
+    androidResources {
+        noCompress 'dlc', 'json'
+    }
+
+    preBuild.doFirst {
+        if (!qnnSDKLocalPath) {
+            throw new RuntimeException("Please download QAIRT SDK and set `qnnSDKLocalPath` in build.gradle.");
+        }
+
+        // Check if QNN SDK is set correctly
+        def qnnSDKFile = file(qnnSDKLocalPath)
+        if (!qnnSDKFile.exists()) {
+            throw new RuntimeException("QAIRT SDK does not exist at $qnnSDKFile.absolutePath.");
+        }
+
+        // Ensure model dlc files are present
+        models.each { model ->
+            def dlcFile = file(Paths.get(relAssetsPath, "${model}.dlc"))
+            if (!dlcFile.exists()) {
+                throw new RuntimeException("Missing ${model}.dlc. Expected at ${dlcFile.absolutePath}")
+            }
+        }
+
+        def libsABIDir = buildDir.dir("libs/arm64-v8a")
+        def libsDirRoot = file("libs")
+        if (!libsDirRoot.exists()) libsDirRoot.mkdirs()
+
+        copy {
+            from qnnSDKLocalPath
+
+            include "**/lib/aarch64-android/libQnnHtp.so"
+            include "**/lib/aarch64-android/libQnnHtpPrepare.so"
+            include "**/lib/aarch64-android/libQnnCpu.so"
+            include "**/lib/aarch64-android/libQnnGpu.so"
+            include "**/lib/aarch64-android/libQnnSystem.so"
+            include "**/lib/aarch64-android/libQnnModelDlc.so"
+            include "**/lib/aarch64-android/libQnnSaver.so"
+            include "**/lib/hexagon-v**/unsigned/libQnnHtpV**Skel.so"
+            include "**/lib/aarch64-android/libQnnHtpV**Stub.so"
+
+            into libsABIDir
+            // Copy libraries without directory structure
+            eachFile {
+                path = name
+            }
+            includeEmptyDirs = false
+        }
+
+        copy {
+            from qnnSDKLocalPath
+            include "**/lib/android/platform-validator.aar"
+            include "**/lib/android/snpe-release.aar"
+            into libsDirRoot
+            eachFile {
+                path = name
+            }
+            includeEmptyDirs = false
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ["*.jar", "*.aar"], dir: "libs")
+    implementation "androidx.appcompat:appcompat:1.7.0"
+    implementation "com.google.android.material:material:1.12.0"
+    implementation "androidx.constraintlayout:constraintlayout:2.2.0"
+    implementation "androidx.documentfile:documentfile:1.1.0"
+}
+
+// Include utilities needed by the AI Hub Apps test suite.
+if (file('../_shared/android/common.gradle').exists()) {
+    apply from: '../_shared/android/common.gradle'
+}
