@@ -72,6 +72,11 @@ Watch the application in action: [Demo video]
 ## 📚 References
 - [1] IEEE Low Power Computer Vision Challenge Organizing Committee. IEEE Low Power Computer Vision Challenge. Annual competition series on low power computer vision. Available: https://lpcv.ai/
 
+---
+
+## Acknowledgements
+
+This material is based upon work supported by the National Science Foundation under Grant Number 2504445. Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the National Science Foundation.
 
 
 [2026 IEEE Low-Power Computer Vision Challenge (LPCVC)]: https://lpcv.ai
